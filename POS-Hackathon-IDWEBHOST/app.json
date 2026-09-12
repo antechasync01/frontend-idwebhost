@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "AURA POS",
+    "slug": "aura-pos",
+    "version": "1.4.2",
+    "orientation": "landscape",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "title": "AURA POS (Windows Client) v1.4.2",
+      "description": "AURA Smart POS - Point of Sale System for Minimart"
+    }
+  }
+}
