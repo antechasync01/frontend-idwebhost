@@ -8,6 +8,6 @@ services:
     container_name: aura-owner-dashboard
     restart: always
     ports:
-      - "3000:80"
+      - "3009:80"
     environment:
       - NODE_ENV=production
