@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  owner-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aura-owner-dashboard
+    restart: always
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production

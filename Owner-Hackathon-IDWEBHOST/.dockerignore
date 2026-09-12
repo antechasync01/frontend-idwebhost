@@ -1,0 +1,14 @@
+node_modules
+dist
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.git
+.gitignore
+.dockerignore
+.vscode
+.idea
+photo
+*.md
+.DS_Store
+Thumbs.db
