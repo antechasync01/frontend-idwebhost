@@ -8,6 +8,6 @@ services:
     container_name: aura-warehouse-frontend
     restart: unless-stopped
     ports:
-      - "3001:80"
+      - "3010:80"
     environment:
       - NODE_ENV=production
