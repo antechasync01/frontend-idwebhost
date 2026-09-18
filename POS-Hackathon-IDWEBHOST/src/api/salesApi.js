@@ -1,5 +1,5 @@
 // AURA SMART POS - Sales & Checkout API Services
-import { apiClient } from './client';
+import { apiClient } from './client.js';
 
 export const salesApi = {
   // Submit cash sale transaction

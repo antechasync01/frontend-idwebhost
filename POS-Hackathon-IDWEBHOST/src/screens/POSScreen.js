@@ -32,38 +32,66 @@ const POSScreen = ({ navigation }) => {
 
   const loadBackendData = async () => {
     try {
-      // Fetch categories from backend
+      // 1. Fetch categories from backend and build lookup map
+      const catMap = {};
       const catsRes = await productApi.getCategories().catch(() => null);
       if (catsRes && Array.isArray(catsRes)) {
         const catNames = catsRes.map((c) => c.name);
-        const uniqueCats = Array.from(new Set(['Semua Produk', ...catNames, ...CATEGORIES]));
-        setCategoriesList(uniqueCats);
+        catsRes.forEach((c) => {
+          if (c.id && c.name) catMap[c.id] = c.name;
+        });
+        setCategoriesList(['Semua Produk', ...catNames]);
       }
 
-      // Fetch active products from backend
+      // 2. Fetch live inventory from backend
+      const invMap = {};
+      const invRes = await productApi.getInventory().catch(() => null);
+      if (invRes && Array.isArray(invRes)) {
+        invRes.forEach((item) => {
+          if (item.product_id) {
+            invMap[item.product_id] = item;
+          }
+        });
+      }
+
+      // 3. Fetch active products from backend database
       const prodsRes = await productApi.getProducts({ limit: 100 }).catch(() => null);
-      if (prodsRes && Array.isArray(prodsRes)) {
-        const backendMapped = prodsRes.map((p) => ({
-          id: p.id,
-          backendId: p.id,
-          name: p.name,
-          sku: p.sku || `SKU-${(p.gtin || '').slice(-6)}`,
-          barcode: p.gtin,
-          gtin: p.gtin,
-          price: p.selling_price || 0,
-          costPrice: p.purchase_price || 0,
-          category: p.category_name || 'Bahan Pokok & Makanan',
-          status: p.status === 'ACTIVE' ? 'NORMAL' : p.status || 'NORMAL',
-          unit: p.unit || 'pcs',
-          brand: p.brand || 'AURA',
-          isBackend: true,
-        }));
+      if (prodsRes && Array.isArray(prodsRes) && prodsRes.length > 0) {
+        const backendMapped = prodsRes.map((p) => {
+          const inv = invMap[p.id];
+          const stock = inv
+            ? (inv.display_quantity ?? inv.total_available ?? 0)
+            : (p.status === 'OUT OF STOCK' ? 0 : 0);
 
-        // Keep local products (such as 9556001295248) that are not already present in backend
-        const backendGtins = new Set(backendMapped.map((p) => p.barcode).filter(Boolean));
-        const remainingLocal = PRODUCTS.filter((lp) => !backendGtins.has(lp.barcode));
+          let status = 'NORMAL';
+          if (stock <= 0 || p.status === 'OUT OF STOCK' || p.status === 'INACTIVE') {
+            status = 'OUT OF STOCK';
+          } else if (stock <= 15) {
+            status = 'LOW STOCK';
+          }
 
-        setProductsList([...backendMapped, ...remainingLocal]);
+          const resolvedCategory = p.category_name || catMap[p.category_id] || 'Umum';
+
+          return {
+            id: p.id,
+            backendId: p.id,
+            name: p.name,
+            sku: p.sku || `SKU-${(p.gtin || '').slice(-6)}`,
+            barcode: p.gtin,
+            gtin: p.gtin,
+            price: p.selling_price || 0,
+            costPrice: p.purchase_price || 0,
+            category: resolvedCategory,
+            stock: stock,
+            status: status,
+            unit: p.unit || 'pcs',
+            brand: p.brand || 'AURA',
+            isBackend: true,
+          };
+        });
+
+        // 100% pure backend database products!
+        setProductsList(backendMapped);
       }
     } catch (err) {
       console.log('POSScreen backend load error:', err.message);
@@ -217,6 +245,7 @@ const POSScreen = ({ navigation }) => {
         visible={showCameraScanner}
         onClose={() => setShowCameraScanner(false)}
         onBarcodeDetected={handleCameraBarcodeDetected}
+        products={productsList}
       />
     </View>
   );

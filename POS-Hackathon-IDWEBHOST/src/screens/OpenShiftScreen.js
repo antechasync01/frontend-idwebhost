@@ -10,6 +10,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
+import OpenShiftSuccessModal from '../components/OpenShiftSuccessModal';
 
 const QUICK_NOMINALS = [
   { value: 100000, label: 'Rp 100.000' },
@@ -23,6 +24,7 @@ const OpenShiftScreen = ({ navigation }) => {
 
   const [nominal, setNominal] = useState('0');
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -68,6 +70,11 @@ const OpenShiftScreen = ({ navigation }) => {
 
   const handleStartShift = () => {
     openShift(numericValue);
+    setShowSuccessModal(true);
+  };
+
+  const handleProceedToPOS = () => {
+    setShowSuccessModal(false);
     if (navigation) {
       navigation.replace('POS');
     }
@@ -206,6 +213,18 @@ const OpenShiftScreen = ({ navigation }) => {
           </View>
         </ScrollView>
       </View>
+
+      {/* Animated Open Shift Success Modal */}
+      <OpenShiftSuccessModal
+        visible={showSuccessModal}
+        cashierName={cashierName}
+        openingCash={numericValue}
+        shiftLabel={currentUser?.shiftLabel || 'Shift Pagi'}
+        shiftTime={currentUser?.shiftTime || '08:00 - 16:00'}
+        terminalId={terminalId}
+        storeName={storeName}
+        onProceed={handleProceedToPOS}
+      />
     </View>
   );
 };

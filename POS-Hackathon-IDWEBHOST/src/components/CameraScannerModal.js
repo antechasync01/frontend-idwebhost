@@ -21,10 +21,11 @@ import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import Colors from '../constants/colors';
 import { playScannerBeep } from '../utils/scannerSound';
 import PRODUCTS from '../constants/products';
+import { productApi } from '../api/productApi';
 
 const SCANNER_CONTAINER_ID = 'aura-camera-scanner-viewport';
 
-const CameraScannerModal = ({ visible, onClose, onBarcodeDetected }) => {
+const CameraScannerModal = ({ visible, onClose, onBarcodeDetected, products = [] }) => {
   const [cameras, setCameras] = useState([]);
   const [selectedCameraId, setSelectedCameraId] = useState('');
   const [isScanning, setIsScanning] = useState(false);
@@ -184,34 +185,93 @@ const CameraScannerModal = ({ visible, onClose, onBarcodeDetected }) => {
     setFlashSuccess(true);
     setTimeout(() => setFlashSuccess(false), 800);
 
-    // Look up product in catalog
-    const matched = PRODUCTS.find(
-      (p) => p.barcode === code || p.sku.toLowerCase() === code.toLowerCase()
+    // Look up product in catalog (check active products list first)
+    const allProducts = products && products.length > 0 ? products : PRODUCTS;
+    const matched = allProducts.find(
+      (p) =>
+        p.barcode === code ||
+        p.gtin === code ||
+        (p.sku && p.sku.toLowerCase() === code.toLowerCase())
     );
 
-    const productInfo = matched || {
-      id: `scan_${code}`,
-      sku: `SKU-${code.slice(-6)}`,
-      barcode: code,
-      name: `Produk Barcode: ${code}`,
-      price: 10000,
-      stock: 50,
-      status: 'NORMAL',
-      category: 'Scan Langsung',
-    };
-
-    setLastScanned({
-      barcode: code,
-      product: productInfo,
-      time: new Date().toLocaleTimeString('id-ID'),
-    });
-
-    setScannedCount((prev) => prev + 1);
-
-    // Dispatch directly into Active Order!
-    if (onBarcodeDetected) {
-      onBarcodeDetected(productInfo);
+    if (matched) {
+      setLastScanned({
+        barcode: code,
+        product: matched,
+        time: new Date().toLocaleTimeString('id-ID'),
+      });
+      setScannedCount((prev) => prev + 1);
+      if (onBarcodeDetected) {
+        onBarcodeDetected(matched);
+      }
+      return;
     }
+
+    // Try backend GTIN query if not found locally
+    productApi
+      .getProductByGtin(code)
+      .then((backendProd) => {
+        let productInfo;
+        if (backendProd) {
+          productInfo = {
+            id: backendProd.id,
+            backendId: backendProd.id,
+            name: backendProd.name,
+            sku: backendProd.sku || `SKU-${(backendProd.gtin || '').slice(-6)}`,
+            barcode: backendProd.gtin,
+            gtin: backendProd.gtin,
+            price: backendProd.selling_price || 0,
+            costPrice: backendProd.purchase_price || 0,
+            category: backendProd.category_name || 'Umum',
+            status: backendProd.status === 'ACTIVE' ? 'NORMAL' : backendProd.status || 'NORMAL',
+            unit: backendProd.unit || 'pcs',
+            brand: backendProd.brand || 'AURA',
+            isBackend: true,
+          };
+        } else {
+          productInfo = {
+            id: `scan_${code}`,
+            sku: `SKU-${code.slice(-6)}`,
+            barcode: code,
+            name: `Produk Barcode: ${code}`,
+            price: 10000,
+            stock: 50,
+            status: 'NORMAL',
+            category: 'Scan Langsung',
+          };
+        }
+
+        setLastScanned({
+          barcode: code,
+          product: productInfo,
+          time: new Date().toLocaleTimeString('id-ID'),
+        });
+        setScannedCount((prev) => prev + 1);
+        if (onBarcodeDetected) {
+          onBarcodeDetected(productInfo);
+        }
+      })
+      .catch(() => {
+        const fallbackInfo = {
+          id: `scan_${code}`,
+          sku: `SKU-${code.slice(-6)}`,
+          barcode: code,
+          name: `Produk Barcode: ${code}`,
+          price: 10000,
+          stock: 50,
+          status: 'NORMAL',
+          category: 'Scan Langsung',
+        };
+        setLastScanned({
+          barcode: code,
+          product: fallbackInfo,
+          time: new Date().toLocaleTimeString('id-ID'),
+        });
+        setScannedCount((prev) => prev + 1);
+        if (onBarcodeDetected) {
+          onBarcodeDetected(fallbackInfo);
+        }
+      });
   };
 
   const handleManualTestScan = (product) => {

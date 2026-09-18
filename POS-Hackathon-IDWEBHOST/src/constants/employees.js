@@ -1,12 +1,12 @@
 // AURA SMART POS - Employee & Backend User Accounts
-// Integrated with backend http://192.168.1.5:8000/api/v1/auth/login
+// Integrated with backend http://192.168.1.8:8000/api/v1/auth/login
 
 export const EMPLOYEES = [
   {
     id: 'chasier@aura.pos',
     email: 'chasier@aura.pos',
     backendUsername: 'cashier@aura.pos',
-    name: 'Andi Kasir (Kasir Toko)',
+    name: 'Andi Kasir',
     password: 'chasier123',
     pin: 'chasier123',
     role: 'CASHIER',
@@ -15,52 +15,22 @@ export const EMPLOYEES = [
     shiftLabel: 'Shift Pagi',
     shiftTime: '08:00 - 16:00',
     avatarColor: '#0284C7',
-    badge: 'KASIR AKTIF',
+    badge: 'KASIR PAGI',
   },
   {
-    id: 'owner@aura.pos',
-    email: 'owner@aura.pos',
-    backendUsername: 'owner@aura.pos',
-    name: 'Budi Santoso (Owner)',
-    password: 'owner123',
-    pin: 'owner123',
-    role: 'OWNER',
-    roleLabel: 'Pemilik Toko (Owner)',
-    shift: 'Full Day',
-    shiftLabel: 'Shift Bebas',
-    shiftTime: '08:00 - 22:00',
-    avatarColor: '#10B981',
-    badge: 'OWNER',
-  },
-  {
-    id: 'admin@aura.pos',
-    email: 'admin@aura.pos',
-    backendUsername: 'admin@aura.pos',
-    name: 'Reza Pratama (Admin Gudang)',
-    password: 'admin123',
-    pin: 'admin123',
-    role: 'WAREHOUSE_ADMIN',
-    roleLabel: 'Admin Gudang',
-    shift: 'Shift-A',
-    shiftLabel: 'Shift Pagi',
-    shiftTime: '08:00 - 16:00',
-    avatarColor: '#8B5CF6',
-    badge: 'ADMIN GUDANG',
-  },
-  {
-    id: 'staff@aura.pos',
-    email: 'staff@aura.pos',
-    backendUsername: 'staff@aura.pos',
-    name: 'Deni Saputra (Staff Gudang)',
-    password: 'staff123',
-    pin: 'staff123',
-    role: 'WAREHOUSE_STAFF',
-    roleLabel: 'Staff Gudang',
-    shift: 'Shift-B',
+    id: 'cashier@aura.pos',
+    email: 'cashier@aura.pos',
+    backendUsername: 'cashier@aura.pos',
+    name: 'Siti Rahma',
+    password: 'cashier123',
+    pin: 'cashier123',
+    role: 'CASHIER',
+    roleLabel: 'Kasir Toko',
+    shift: 'Shift-02',
     shiftLabel: 'Shift Siang',
     shiftTime: '13:00 - 21:00',
-    avatarColor: '#F59E0B',
-    badge: 'STAFF GUDANG',
+    avatarColor: '#10B981',
+    badge: 'KASIR SIANG',
   },
 ];
 
@@ -69,7 +39,7 @@ export const STORE_INFO = {
   storeCode: 'BLT-01',
   terminalId: 'POS-01',
   systemVersion: 'Windows Client v2.0.0 (API Connected)',
-  backendUrl: 'http://192.168.1.5:8000/api/v1',
+  backendUrl: 'http://192.168.1.8:8000/api/v1',
 };
 
 export default EMPLOYEES;

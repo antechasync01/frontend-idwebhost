@@ -88,19 +88,25 @@ const CashPaymentModal = ({
         unit_price: it.price,
       }));
 
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const canSendToBackend = itemsPayload.length > 0 && itemsPayload.every((it) => uuidRegex.test(it.product_id));
+
     try {
-      // If items have valid UUID, send to backend
-      const res = await salesApi.createSale({
-        items: itemsPayload,
-        cash_paid: numericReceived,
-        payment_method: 'CASH',
-      });
+      let res = null;
+      if (canSendToBackend) {
+        res = await salesApi.createSale({
+          items: itemsPayload,
+          cash_paid: numericReceived,
+          payment_method: 'CASH',
+        });
+      }
 
       setCompletedSale(res || {
         receipt_number: `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 9000 + 1000)}`,
         total_amount: total,
         cash_paid: numericReceived,
         cash_change: change,
+        offline: !canSendToBackend,
       });
     } catch (err) {
       console.warn('Backend sale error, fallback to local confirmation:', err.message);

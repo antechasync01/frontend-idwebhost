@@ -18,11 +18,11 @@ import {
   faRightToBracket,
   faCircleCheck,
   faCircleExclamation,
-  faDeleteLeft,
   faUser,
   faCashRegister,
 } from '@fortawesome/free-solid-svg-icons';
 import Colors from '../constants/colors';
+import { API_CONFIG } from '../api/config';
 import { useAuth } from '../context/AuthContext';
 
 const LoginScreen = ({ navigation }) => {
@@ -32,7 +32,8 @@ const LoginScreen = ({ navigation }) => {
   const [pin, setPin] = useState('chasier123');
   const [showPin, setShowPin] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [activeField, setActiveField] = useState('pin'); // 'id' or 'pin'
+  const [isIdFocused, setIsIdFocused] = useState(false);
+  const [isPinFocused, setIsPinFocused] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -56,34 +57,6 @@ const LoginScreen = ({ navigation }) => {
     setEmployeeId(emp.email || emp.id);
     setPin(emp.password || emp.pin);
     setErrorMessage('');
-    setActiveField('pin');
-  };
-
-  const handleKeypadPress = (val) => {
-    setErrorMessage('');
-    if (activeField === 'pin') {
-      setPin((prev) => prev + val);
-    } else {
-      setEmployeeId((prev) => prev + val);
-    }
-  };
-
-  const handleKeypadBackspace = () => {
-    setErrorMessage('');
-    if (activeField === 'pin') {
-      setPin((prev) => prev.slice(0, -1));
-    } else {
-      setEmployeeId((prev) => prev.slice(0, -1));
-    }
-  };
-
-  const handleKeypadClear = () => {
-    setErrorMessage('');
-    if (activeField === 'pin') {
-      setPin('');
-    } else {
-      setEmployeeId('');
-    }
   };
 
   const handleLogin = async () => {
@@ -142,7 +115,9 @@ const LoginScreen = ({ navigation }) => {
               ]}
             />
             <Text style={styles.systemBadgeText}>
-              {isBackendOnline ? 'API Connected: 192.168.1.5:8000' : 'Offline Mode'}
+              {isBackendOnline
+                ? `API Connected: ${API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/api\/v1\/?$/, '')}`
+                : 'Offline Mode'}
             </Text>
           </View>
           <View style={styles.headerDivider} />
@@ -189,22 +164,20 @@ const LoginScreen = ({ navigation }) => {
                 <Text style={styles.inputLabel}>EMAIL / EMPLOYEE ID</Text>
                 {selectedEmployee && (
                   <Text style={styles.recognizedEmpText}>
-                    ✓ {selectedEmployee.name} ({selectedEmployee.roleLabel || selectedEmployee.role})
+                    ✓ {selectedEmployee.name} ({selectedEmployee.roleLabel || 'Kasir Toko'})
                   </Text>
                 )}
               </View>
-              <TouchableOpacity
-                activeOpacity={1}
-                onPress={() => setActiveField('id')}
+              <View
                 style={[
                   styles.inputBox,
-                  activeField === 'id' && styles.inputBoxActive,
+                  isIdFocused && styles.inputBoxActive,
                 ]}
               >
                 <FontAwesomeIcon
                   icon={faIdCard}
                   size={16}
-                  color={activeField === 'id' ? Colors.primaryBlue : Colors.textMuted}
+                  color={isIdFocused ? Colors.primaryBlue : Colors.textMuted}
                 />
                 <TextInput
                   style={styles.inputField}
@@ -213,7 +186,8 @@ const LoginScreen = ({ navigation }) => {
                     setEmployeeId(text);
                     setErrorMessage('');
                   }}
-                  onFocus={() => setActiveField('id')}
+                  onFocus={() => setIsIdFocused(true)}
+                  onBlur={() => setIsIdFocused(false)}
                   placeholder="Masukkan Email atau ID (contoh: chasier@aura.pos)"
                   placeholderTextColor={Colors.textMuted}
                   autoCapitalize="none"
@@ -226,7 +200,7 @@ const LoginScreen = ({ navigation }) => {
                     <Text style={styles.clearFieldBtnText}>✕</Text>
                   </TouchableOpacity>
                 )}
-              </TouchableOpacity>
+              </View>
             </View>
 
             {/* Input 2: Password / PIN */}
@@ -234,18 +208,16 @@ const LoginScreen = ({ navigation }) => {
               <View style={styles.inputLabelRow}>
                 <Text style={styles.inputLabel}>PASSWORD / PIN</Text>
               </View>
-              <TouchableOpacity
-                activeOpacity={1}
-                onPress={() => setActiveField('pin')}
+              <View
                 style={[
                   styles.inputBox,
-                  activeField === 'pin' && styles.inputBoxActive,
+                  isPinFocused && styles.inputBoxActive,
                 ]}
               >
                 <FontAwesomeIcon
                   icon={faLock}
                   size={16}
-                  color={activeField === 'pin' ? Colors.primaryBlue : Colors.textMuted}
+                  color={isPinFocused ? Colors.primaryBlue : Colors.textMuted}
                 />
                 <TextInput
                   style={styles.inputField}
@@ -254,7 +226,9 @@ const LoginScreen = ({ navigation }) => {
                     setPin(text);
                     setErrorMessage('');
                   }}
-                  onFocus={() => setActiveField('pin')}
+                  onFocus={() => setIsPinFocused(true)}
+                  onBlur={() => setIsPinFocused(false)}
+                  onSubmitEditing={handleLogin}
                   placeholder="Masukkan Password atau PIN"
                   placeholderTextColor={Colors.textMuted}
                   secureTextEntry={!showPin}
@@ -268,39 +242,6 @@ const LoginScreen = ({ navigation }) => {
                     size={16}
                     color={Colors.textSecondary}
                   />
-                </TouchableOpacity>
-              </TouchableOpacity>
-            </View>
-
-            {/* Touch Numeric Keypad */}
-            <View style={styles.keypadSection}>
-              <View style={styles.keypadGrid}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                  <TouchableOpacity
-                    key={num}
-                    style={styles.keypadBtn}
-                    onPress={() => handleKeypadPress(String(num))}
-                  >
-                    <Text style={styles.keypadBtnText}>{num}</Text>
-                  </TouchableOpacity>
-                ))}
-                <TouchableOpacity
-                  style={[styles.keypadBtn, styles.keypadBtnSpecial]}
-                  onPress={handleKeypadClear}
-                >
-                  <Text style={styles.keypadClearText}>C</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.keypadBtn}
-                  onPress={() => handleKeypadPress('0')}
-                >
-                  <Text style={styles.keypadBtnText}>0</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.keypadBtn, styles.keypadBtnSpecial]}
-                  onPress={handleKeypadBackspace}
-                >
-                  <FontAwesomeIcon icon={faDeleteLeft} size={18} color={Colors.textSecondary} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -321,19 +262,21 @@ const LoginScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          {/* Right Column: Employee Shift Directory & Quick Autofill */}
+          {/* Right Column: Cashier Shift Directory & Quick Autofill */}
           <View style={styles.rightCard}>
             <View style={styles.rightCardHeader}>
               <View>
-                <Text style={styles.rightCardTitle}>Akun Karyawan Terdaftar</Text>
+                <Text style={styles.rightCardTitle}>Akun Kasir Terdaftar</Text>
                 <Text style={styles.rightCardSubtitle}>
-                  Pilih akun di bawah untuk verifikasi shift kasir
+                  Pilih akun kasir di bawah untuk memulai shift
                 </Text>
               </View>
             </View>
 
             <View style={styles.employeeList}>
-              {employeesList.map((emp) => {
+              {employeesList
+                .filter((emp) => emp.role === 'CASHIER' || emp.roleLabel?.toLowerCase().includes('kasir'))
+                .map((emp) => {
                 const isSelected =
                   emp.id.toLowerCase() === (employeeId || '').trim().toLowerCase() ||
                   emp.email.toLowerCase() === (employeeId || '').trim().toLowerCase() ||
@@ -406,11 +349,9 @@ const LoginScreen = ({ navigation }) => {
               </Text>
 
               <View style={styles.demoPinTip}>
-                <Text style={styles.demoPinTipTitle}>💡 Akun Akses Backend AURA POS:</Text>
-                <Text style={styles.demoPinTipItem}>• Kasir: <Text style={styles.boldText}>chasier@aura.pos</Text> | <Text style={styles.boldText}>chasier123</Text></Text>
-                <Text style={styles.demoPinTipItem}>• Owner: <Text style={styles.boldText}>owner@aura.pos</Text> | <Text style={styles.boldText}>owner123</Text></Text>
-                <Text style={styles.demoPinTipItem}>• Admin Gudang: <Text style={styles.boldText}>admin@aura.pos</Text> | <Text style={styles.boldText}>admin123</Text></Text>
-                <Text style={styles.demoPinTipItem}>• Staff Gudang: <Text style={styles.boldText}>staff@aura.pos</Text> | <Text style={styles.boldText}>staff123</Text></Text>
+                <Text style={styles.demoPinTipTitle}>💡 Akun Kasir Aktif:</Text>
+                <Text style={styles.demoPinTipItem}>• Shift 1: <Text style={styles.boldText}>chasier@aura.pos</Text> (pw: <Text style={styles.boldText}>chasier123</Text>)</Text>
+                <Text style={styles.demoPinTipItem}>• Shift 2: <Text style={styles.boldText}>cashier@aura.pos</Text> (pw: <Text style={styles.boldText}>cashier123</Text>)</Text>
               </View>
             </View>
           </View>
@@ -537,6 +478,7 @@ const styles = StyleSheet.create({
     maxWidth: 1060,
     width: '100%',
     gap: 28,
+    alignItems: 'flex-start',
   },
   leftCard: {
     flex: 1.15,
@@ -684,39 +626,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: Colors.primaryBlue,
   },
-  keypadSection: {
-    marginTop: 6,
-    marginBottom: 20,
-  },
-  keypadGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'space-between',
-  },
-  keypadBtn: {
-    width: '31.5%',
-    height: 48,
-    borderRadius: 8,
-    backgroundColor: Colors.bgPage,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  keypadBtnSpecial: {
-    backgroundColor: '#F1F5F9',
-  },
-  keypadBtnText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  keypadClearText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.red,
-  },
   loginSubmitBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -725,6 +634,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primaryBlue,
     paddingVertical: 14,
     borderRadius: 10,
+    marginTop: 24,
   },
   loginSubmitBtnDisabled: {
     backgroundColor: '#93C5FD',

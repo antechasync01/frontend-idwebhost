@@ -1,5 +1,5 @@
 // AURA SMART POS - Shift Closing & Cash Reconciliation API Services
-import { apiClient } from './client';
+import { apiClient } from './client.js';
 
 export const closingApi = {
   // Get closing status for today

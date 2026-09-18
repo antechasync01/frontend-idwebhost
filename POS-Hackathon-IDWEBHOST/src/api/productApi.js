@@ -1,5 +1,5 @@
 // AURA SMART POS - Products & Categories API Services
-import { apiClient } from './client';
+import { apiClient } from './client.js';
 
 export const productApi = {
   // Get list of categories from backend
@@ -18,6 +18,11 @@ export const productApi = {
 
     const qs = query.toString();
     return apiClient(`/products${qs ? `?${qs}` : ''}`);
+  },
+
+  // Get live inventory counts from backend
+  getInventory: async () => {
+    return apiClient('/inventory');
   },
 
   // Lookup product directly by barcode / GTIN (used by DroidCam scanner)

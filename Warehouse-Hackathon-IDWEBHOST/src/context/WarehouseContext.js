@@ -389,23 +389,109 @@ const INITIAL_PURCHASE_ORDERS = [
   },
 ];
 
+const DEMO_USERS = {
+  'EMP-001': {
+    id: 'EMP-001',
+    pin: '1234',
+    name: 'Budi Santoso',
+    role: 'WAREHOUSE_ADMIN',
+    avatar: 'BS',
+    area: 'Pusat Distribusi (Admin)',
+    position: 'Kepala Gudang',
+  },
+  'EMP-002': {
+    id: 'EMP-002',
+    pin: '5678',
+    name: 'Ani Wijaya',
+    role: 'WAREHOUSE_STAFF',
+    avatar: 'AW',
+    area: 'Gudang Utama (G-01)',
+    position: 'Staff Operasional',
+  },
+  'EMP-003': {
+    id: 'EMP-003',
+    pin: '1122',
+    name: 'Hendra Kusuma',
+    role: 'WAREHOUSE_STAFF',
+    avatar: 'HK',
+    area: 'Loading Dock & Chiller',
+    position: 'Staff Operasional',
+  },
+};
+
+const INITIAL_STAFF_TASKS = [
+  {
+    id: 'task-1',
+    title: 'Restock Rak Display Minuman',
+    category: 'TRANSFER',
+    priority: 'URGENT',
+    location: 'G-B01 ➔ R-03C',
+    productName: 'Aqua Air Mineral 600ml',
+    qty: '48 botol',
+    status: 'PENDING',
+    assignedTo: null,
+    time: '10:30',
+    desc: 'Stok rak display chiller di bawah 40 botol. Pindahkan 48 botol dari gudang.',
+  },
+  {
+    id: 'task-2',
+    title: 'Audit Fisik Selisih Beras Pandan Wangi',
+    category: 'OPNAME',
+    priority: 'NORMAL',
+    location: 'G-D02 / R-04C',
+    productName: 'Beras Pandan Wangi Super 5kg',
+    qty: 'Audit 18 karung',
+    status: 'PENDING',
+    assignedTo: null,
+    time: '11:00',
+    desc: 'Terdapat catatan selisih 2 karung dari stock opname berkala.',
+  },
+  {
+    id: 'task-3',
+    title: 'Verifikasi Fisik Kedatangan Indomie',
+    category: 'RECEIVING',
+    priority: 'URGENT',
+    location: 'Loading Dock B',
+    productName: 'Indomie Goreng Spesial (PO-2026-092)',
+    qty: '240 pcs',
+    status: 'IN_PROGRESS',
+    assignedTo: 'Ani Wijaya',
+    time: '14:00',
+    desc: 'Cek fisik kardus dan barcode kedatangan armada Indofood.',
+  },
+  {
+    id: 'task-4',
+    title: 'Pengisian Rak Cokelat SilverQueen',
+    category: 'RESTOCK',
+    priority: 'NORMAL',
+    location: 'G-C01 ➔ R-02B',
+    productName: 'SilverQueen Chocolate Almond 62g',
+    qty: '24 pcs',
+    status: 'DONE',
+    assignedTo: 'Ani Wijaya',
+    time: '09:15',
+    desc: 'Restock rak depan display kasir berhasil diselesaikan.',
+  },
+];
+
+const INITIAL_STAFF_ACTIVITY = [
+  { id: 'act-1', type: 'CLOCK', action: 'Clock In Shift Pagi (08:00 WIB)', time: '08:00' },
+  { id: 'act-2', type: 'TRANSFER', action: 'Restock 24 pcs SilverQueen ke Rak R-02B', time: '09:15' },
+  { id: 'act-3', type: 'COUNTING', action: 'Scan Barcode Aqua 600ml (EAN: 8998866200232)', time: '10:05' },
+  { id: 'act-4', type: 'RECEIVING', action: 'Mulai verifikasi PO Indofood di Loading Dock', time: '14:00' },
+];
+
 export const WarehouseProvider = ({ children }) => {
+  // Auth State
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
   // Roles: 'WAREHOUSE_ADMIN' (Lead/Admin) or 'WAREHOUSE_STAFF' (Field Staff)
   const [userRole, setUserRole] = useState('WAREHOUSE_ADMIN');
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
   const [movements, setMovements] = useState(INITIAL_MOVEMENTS);
   const [shipments, setShipments] = useState(INITIAL_SHIPMENTS);
   const [purchaseOrders, setPurchaseOrders] = useState(INITIAL_PURCHASE_ORDERS);
-
-  // Modals & Drawers
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
-  const [isReceivingModalOpen, setIsReceivingModalOpen] = useState(false);
-  const [isOpnameModalOpen, setIsOpnameModalOpen] = useState(false);
-  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
-  const [isCreatePoModalOpen, setIsCreatePoModalOpen] = useState(false);
-  const [selectedShipment, setSelectedShipment] = useState(null);
 
   // Toast Notification
   const [toast, setToast] = useState({ visible: false, message: '', type: 'info' });
@@ -416,6 +502,141 @@ export const WarehouseProvider = ({ children }) => {
       setToast({ visible: false, message: '', type: 'info' });
     }, 3500);
   }, []);
+
+  // Staff State
+  const [staffTasks, setStaffTasks] = useState(INITIAL_STAFF_TASKS);
+  const [staffActivityLog, setStaffActivityLog] = useState(INITIAL_STAFF_ACTIVITY);
+  const [shiftInfo, setShiftInfo] = useState({
+    isClockedIn: false,
+    clockInTime: null,
+    clockOutTime: null,
+    totalHours: '0',
+  });
+  const [scanHistory, setScanHistory] = useState([
+    { id: 'scan-1', sku: 'SKU-10024', name: 'Aqua Air Mineral 600ml', time: '10:05', ean13: '8998866200232' },
+    { id: 'scan-2', sku: 'SKU-10023', name: 'Indomie Goreng Spesial 85g', time: '09:40', ean13: '8998866200225' },
+  ]);
+
+  // Auth Handlers
+  const handleLogin = useCallback((empId, pinInput) => {
+    const user = DEMO_USERS[empId];
+    if (user && user.pin === pinInput) {
+      setIsAuthenticated(true);
+      setCurrentUser(user);
+      setUserRole(user.role);
+      showToast(`Selamat datang, ${user.name}!`, 'success');
+      return { success: true };
+    }
+    return { success: false, error: 'Employee ID atau PIN salah' };
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    showToast('Anda telah keluar dari sistem', 'info');
+  }, []);
+
+  // Staff Shift Handlers
+  const handleClockIn = useCallback(() => {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    setShiftInfo({
+      isClockedIn: true,
+      clockInTime: now.toISOString(),
+      clockOutTime: null,
+      totalHours: '0',
+    });
+    setStaffActivityLog((prev) => [
+      { id: `act-${Date.now()}`, type: 'CLOCK', action: `Clock In Shift (${timeStr} WIB)`, time: timeStr },
+      ...prev,
+    ]);
+    showToast('Clock In berhasil! Selamat bertugas.', 'success');
+  }, []);
+
+  const handleClockOut = useCallback(() => {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    setShiftInfo((prev) => ({
+      ...prev,
+      isClockedIn: false,
+      clockOutTime: now.toISOString(),
+    }));
+    setStaffActivityLog((prev) => [
+      { id: `act-${Date.now()}`, type: 'CLOCK', action: `Clock Out Shift (${timeStr} WIB)`, time: timeStr },
+      ...prev,
+    ]);
+    showToast('Clock Out berhasil! Terima kasih atas kerja keras Anda hari ini.', 'info');
+  }, []);
+
+  // Staff Task Handlers
+  const handleClaimTask = useCallback((taskId) => {
+    const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    let claimedTask = null;
+    setStaffTasks((prev) =>
+      prev.map((t) => {
+        if (t.id === taskId) {
+          claimedTask = t;
+          return { ...t, status: 'IN_PROGRESS', assignedTo: currentUser?.name || 'Ani Wijaya' };
+        }
+        return t;
+      })
+    );
+    if (claimedTask) {
+      setStaffActivityLog((prev) => [
+        { id: `act-${Date.now()}`, type: claimedTask.category || 'TRANSFER', action: `Mengambil tugas: ${claimedTask.title}`, time: timeStr },
+        ...prev,
+      ]);
+      showToast(`Tugas "${claimedTask.title}" berhasil diambil`, 'info');
+    }
+  }, [currentUser]);
+
+  const handleCompleteTask = useCallback((taskId) => {
+    const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    let completedTask = null;
+    setStaffTasks((prev) =>
+      prev.map((t) => {
+        if (t.id === taskId) {
+          completedTask = t;
+          return { ...t, status: 'DONE' };
+        }
+        return t;
+      })
+    );
+    if (completedTask) {
+      setStaffActivityLog((prev) => [
+        { id: `act-${Date.now()}`, type: completedTask.category || 'TRANSFER', action: `Menyelesaikan tugas: ${completedTask.title}`, time: timeStr },
+        ...prev,
+      ]);
+      showToast(`Tugas "${completedTask.title}" selesai! Kerja bagus 🎉`, 'success');
+    }
+  }, []);
+
+  // Scan History Handler
+  const handleAddScanHistory = useCallback((product) => {
+    const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    const newEntry = {
+      id: `scan-${Date.now()}`,
+      sku: product.sku,
+      name: product.name,
+      ean13: product.ean13,
+      time: timeStr,
+    };
+    setScanHistory((prev) => [newEntry, ...prev.slice(0, 19)]);
+    setStaffActivityLog((prev) => [
+      { id: `act-${Date.now()}`, type: 'COUNTING', action: `Scan Barcode: ${product.name} (${product.sku})`, time: timeStr },
+      ...prev,
+    ]);
+  }, []);
+
+  // Modals & Drawers
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [isReceivingModalOpen, setIsReceivingModalOpen] = useState(false);
+  const [isOpnameModalOpen, setIsOpnameModalOpen] = useState(false);
+  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
+  const [isCreatePoModalOpen, setIsCreatePoModalOpen] = useState(false);
+  const [selectedShipment, setSelectedShipment] = useState(null);
 
   // Action: Transfer Stock from Gudang to Display
   const handleTransferStock = useCallback(
@@ -638,12 +859,30 @@ export const WarehouseProvider = ({ children }) => {
   return (
     <WarehouseContext.Provider
       value={{
+        // Auth
+        isAuthenticated,
+        currentUser,
+        handleLogin,
+        handleLogout,
+        // Role
         userRole,
         setUserRole,
+        // Data
         products,
         movements,
         shipments,
         purchaseOrders,
+        // Staff
+        staffTasks,
+        staffActivityLog,
+        shiftInfo,
+        scanHistory,
+        handleClockIn,
+        handleClockOut,
+        handleClaimTask,
+        handleCompleteTask,
+        handleAddScanHistory,
+        // UI State
         selectedProduct,
         setSelectedProduct,
         isDetailDrawerOpen,
@@ -662,6 +901,7 @@ export const WarehouseProvider = ({ children }) => {
         setSelectedShipment,
         toast,
         showToast,
+        // Actions
         handleTransferStock,
         handleReceiveStock,
         handleStockOpname,

@@ -13,9 +13,42 @@ export const AuthProvider = ({ children }) => {
   const [isBackendOnline, setIsBackendOnline] = useState(false);
   const [authToken, setAuthTokenState] = useState(null);
 
-  // Check backend health on startup
+  // Check backend health on startup and restore session if token exists
   useEffect(() => {
-    checkBackendHealth();
+    const initAuth = async () => {
+      const isOnline = await checkBackendHealth();
+      if (isOnline) {
+        const token = getAuthToken();
+        if (token) {
+          setAuthTokenState(token);
+          try {
+            const profile = await authApi.getMe();
+            if (profile?.id) {
+              const matchedEmployee = EMPLOYEES.find(
+                (emp) =>
+                  emp.email.toLowerCase() === (profile.email || '').toLowerCase() ||
+                  emp.backendUsername.toLowerCase() === (profile.username || '').toLowerCase()
+              );
+              setCurrentUser({
+                ...(matchedEmployee || EMPLOYEES[0]),
+                backendId: profile.id,
+                username: profile.username,
+                email: profile.email,
+                role: profile.role_code || 'CASHIER',
+                name: profile.full_name || matchedEmployee?.name || 'Kasir Toko',
+                permissions: profile.permissions || [],
+                isBackendAuthenticated: true,
+              });
+            }
+          } catch (err) {
+            console.log('Stored token expired or invalid:', err.message);
+            setAuthToken(null);
+            setAuthTokenState(null);
+          }
+        }
+      }
+    };
+    initAuth();
   }, []);
 
   const checkBackendHealth = async () => {
@@ -49,10 +82,10 @@ export const AuthProvider = ({ children }) => {
         emp.backendUsername.toLowerCase() === rawId.toLowerCase()
     );
 
-    const usernameToTry = matchedEmployee ? matchedEmployee.backendUsername : rawId;
-    const passwordToTry = matchedEmployee ? matchedEmployee.password : rawSecret;
+    const usernameToTry = (rawId.includes('@') || !matchedEmployee) ? rawId : (matchedEmployee.backendUsername || rawId);
+    const passwordToTry = rawSecret || (matchedEmployee ? matchedEmployee.password : '');
 
-    // Try backend authentication first
+    // Try backend authentication first via API & Database
     try {
       const loginRes = await authApi.login(usernameToTry, passwordToTry);
       if (loginRes?.access_token) {
@@ -60,17 +93,21 @@ export const AuthProvider = ({ children }) => {
         setAuthTokenState(loginRes.access_token);
         setIsBackendOnline(true);
 
-        // Fetch user profile from backend
+        // Fetch user profile from backend database
         const profile = await authApi.getMe().catch(() => null);
 
         const mergedUser = {
-          ...(matchedEmployee || EMPLOYEES[0]),
+          ...(matchedEmployee || {}),
+          id: profile?.id || (matchedEmployee?.id || rawId),
           backendId: profile?.id,
           username: profile?.username || usernameToTry,
-          email: profile?.email || matchedEmployee?.email,
+          email: profile?.email || matchedEmployee?.email || rawId,
           role: profile?.role_code || matchedEmployee?.role || 'CASHIER',
-          name: profile?.full_name || matchedEmployee?.name,
+          roleLabel: profile?.role_name || matchedEmployee?.roleLabel || 'Kasir Toko',
+          name: profile?.full_name || matchedEmployee?.name || 'Kasir Toko',
           permissions: profile?.permissions || [],
+          shift: matchedEmployee?.shift || 'Shift-01',
+          shiftTime: matchedEmployee?.shiftTime || '08:00 - 16:00',
           isBackendAuthenticated: true,
         };
 

@@ -1,5 +1,5 @@
 // AURA SMART POS - Core API Client Wrapper
-import { API_CONFIG } from './config';
+import { API_CONFIG } from './config.js';
 
 let currentAuthToken = null;
 

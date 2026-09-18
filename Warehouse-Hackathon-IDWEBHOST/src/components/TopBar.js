@@ -6,7 +6,7 @@ import { useWarehouse } from '../context/WarehouseContext';
 
 const TopBar = ({ activeScreen, onSearch }) => {
   const { isMobile, isSmallMobile, isTablet, isDesktop, toggleMobileMenu, toggleSidebar, sidebarCollapsed } = useResponsive();
-  const { userRole, setUserRole, setIsScannerModalOpen, showToast } = useWarehouse();
+  const { userRole, setUserRole, setIsScannerModalOpen, showToast, handleLogout } = useWarehouse();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -277,6 +277,16 @@ const TopBar = ({ activeScreen, onSearch }) => {
             </View>
           )}
         </View>
+
+        {/* Logout Button */}
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          title="Keluar dari Sistem"
+          activeOpacity={0.7}
+        >
+          <i className="fa-solid fa-arrow-right-from-bracket" style={{ fontSize: 13, color: colors.danger }} />
+        </TouchableOpacity>
       </View>
 
       {/* Mobile/Tablet Expandable Search Bar overlay */}
@@ -477,6 +487,16 @@ const styles = StyleSheet.create({
   roleStaff: {
     backgroundColor: '#F1F5F9',
     borderColor: '#CBD5E1',
+  },
+  logoutButton: {
+    width: 34,
+    height: 34,
+    borderRadius: borderRadius.md,
+    backgroundColor: '#FFF1F2',
+    borderWidth: 1,
+    borderColor: '#FFE4E6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   rolePillText: {
     fontSize: fonts.sizes.xs,

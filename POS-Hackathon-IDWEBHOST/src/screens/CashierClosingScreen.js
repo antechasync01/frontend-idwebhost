@@ -16,6 +16,7 @@ import {
 import Colors from '../constants/colors';
 import Header from '../components/Header';
 import ConfirmModal from '../components/ConfirmModal';
+import EndShiftSuccessModal from '../components/EndShiftSuccessModal';
 import { useAuth } from '../context/AuthContext';
 import { closingApi } from '../api/closingApi';
 
@@ -43,6 +44,7 @@ const CashierClosingScreen = ({ navigation }) => {
   const [physicalAmount, setPhysicalAmount] = useState(String(startingCash || '2450000'));
   const [remarks, setRemarks] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [backendSummary, setBackendSummary] = useState(null);
 
   useEffect(() => {
@@ -97,6 +99,16 @@ const CashierClosingScreen = ({ navigation }) => {
       if (navigation) {
         navigation.replace('Login');
       }
+    }
+    // Show End Shift Success animation modal
+    setShowSuccessModal(true);
+  };
+
+  const handleProceedToLogin = () => {
+    setShowSuccessModal(false);
+    logout();
+    if (navigation) {
+      navigation.replace('Login');
     }
   };
 
@@ -243,6 +255,18 @@ const CashierClosingScreen = ({ navigation }) => {
         message="this action can't be undone. please confirm if you want to proceed"
         onConfirm={handleConfirmClose}
         onCancel={() => setShowConfirmModal(false)}
+      />
+
+      <EndShiftSuccessModal
+        visible={showSuccessModal}
+        cashierName={cashierDisplayName}
+        startingCash={startingCash || 0}
+        physicalCash={physicalNum}
+        expectedCash={expectedAmount}
+        variance={variance}
+        shiftLabel={currentUser?.shiftLabel || currentUser?.shift || 'Shift Pagi'}
+        shiftTime={currentUser?.shiftTime || '08:00 - 16:00'}
+        onProceed={handleProceedToLogin}
       />
     </View>
   );

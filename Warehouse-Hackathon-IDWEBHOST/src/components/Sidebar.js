@@ -17,7 +17,7 @@ const menuItems = [
 ];
 
 const SidebarContent = ({ activeScreen, onNavigate, onClose }) => {
-  const { userRole } = useWarehouse();
+  const { userRole, handleLogout } = useWarehouse();
   const { sidebarCollapsed, isDesktop } = useResponsive();
 
   const isDrawer = !isDesktop || Boolean(onClose);
@@ -158,6 +158,16 @@ const SidebarContent = ({ activeScreen, onNavigate, onClose }) => {
               {userRole === 'WAREHOUSE_ADMIN' ? 'Kepala Gudang' : 'Staff Operasional'}
             </Text>
           </View>
+        )}
+        {(!sidebarCollapsed || isDrawer) && (
+          <TouchableOpacity
+            style={styles.logoutBtn}
+            onPress={handleLogout}
+            title="Keluar"
+            activeOpacity={0.7}
+          >
+            <i className="fa-solid fa-arrow-right-from-bracket" style={{ fontSize: 13, color: colors.danger }} />
+          </TouchableOpacity>
         )}
       </View>
     </View>
@@ -390,6 +400,16 @@ const styles = StyleSheet.create({
   userRoleText: {
     fontSize: fonts.sizes.xs,
     color: colors.textSecondary,
+  },
+  logoutBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: borderRadius.md,
+    backgroundColor: '#FFF1F2',
+    borderWidth: 1,
+    borderColor: '#FFE4E6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   mobileOverlay: {
     flex: 1,

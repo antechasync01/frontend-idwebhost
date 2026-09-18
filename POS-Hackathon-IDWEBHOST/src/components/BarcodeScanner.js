@@ -5,7 +5,7 @@ import { faBarcode, faMagnifyingGlass, faCamera } from '@fortawesome/free-solid-
 import Colors from '../constants/colors';
 
 const BarcodeScanner = ({ onSearch, onScan, onOpenCamera }) => {
-  const [barcode, setBarcode] = useState('8992224011234');
+  const [barcode, setBarcode] = useState('');
 
   const handleSearch = () => {
     if (onSearch) onSearch(barcode);
@@ -33,7 +33,7 @@ const BarcodeScanner = ({ onSearch, onScan, onOpenCamera }) => {
             value={barcode}
             onChangeText={setBarcode}
             onSubmitEditing={handleSubmit}
-            placeholder="Scan atau ketik barcode..."
+            placeholder="Scan atau ketik barcode (contoh: 8998888110015)..."
             placeholderTextColor={Colors.textMuted}
           />
           <View style={styles.scanBadge}>

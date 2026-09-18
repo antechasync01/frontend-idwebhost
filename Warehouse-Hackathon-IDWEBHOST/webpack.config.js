@@ -5,7 +5,7 @@ module.exports = {
   entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'bundle.[contenthash:8].js',
+    filename: process.env.NODE_ENV === 'production' ? 'bundle.[contenthash:8].js' : 'bundle.js',
     publicPath: '/',
     clean: true,
   },
@@ -44,7 +44,7 @@ module.exports = {
     static: {
       directory: path.join(__dirname, 'public'),
     },
-    port: 3001,
+    port: process.env.PORT || 3002,
     hot: true,
     historyApiFallback: true,
     host: '0.0.0.0',

@@ -1,5 +1,5 @@
 // AURA SMART POS - Authentication API Services
-import { apiClient, setAuthToken } from './client';
+import { apiClient, setAuthToken } from './client.js';
 
 export const authApi = {
   // Check backend health
@@ -9,12 +9,17 @@ export const authApi = {
 
   // Login with username/email & password
   login: async (usernameOrEmail, password) => {
-    let normalizedUser = (usernameOrEmail || '').trim();
-    let normalizedPass = (password || '').trim();
+    const rawUser = (usernameOrEmail || '').trim();
+    const rawPass = (password || '').trim();
 
-    // Support both 'chasier' (Indonesian phonetic) and 'cashier' (English)
-    const lowerUser = normalizedUser.toLowerCase();
+    // Map common variants, specifically 'chasier' (Indonesian spelling in docs) -> 'cashier'
+    let normalizedUser = rawUser;
+    let normalizedPass = rawPass;
+
+    const lowerUser = rawUser.toLowerCase();
     if (lowerUser === 'chasier@aura.pos' || lowerUser === 'chasier') {
+      normalizedUser = 'cashier@aura.pos';
+    } else if (lowerUser === 'cashier') {
       normalizedUser = 'cashier@aura.pos';
     } else if (lowerUser === 'owner') {
       normalizedUser = 'owner@aura.pos';
@@ -22,29 +27,42 @@ export const authApi = {
       normalizedUser = 'staff@aura.pos';
     } else if (lowerUser === 'admin' || lowerUser === 'admin gudang') {
       normalizedUser = 'admin@aura.pos';
-    } else if (lowerUser === 'cashier') {
-      normalizedUser = 'cashier@aura.pos';
     }
 
-    if (normalizedPass === 'chasier123') {
+    if (rawPass === 'chasier123') {
       normalizedPass = 'cashier123';
     }
 
-    const payload = {
-      username_or_email: normalizedUser,
-      password: normalizedPass,
-    };
-
-    const res = await apiClient('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-
-    if (res?.access_token) {
-      setAuthToken(res.access_token);
+    // Try candidates: normalized first, then raw if different
+    const candidates = [
+      { u: normalizedUser, p: normalizedPass },
+    ];
+    if (normalizedUser !== rawUser || normalizedPass !== rawPass) {
+      candidates.push({ u: rawUser, p: rawPass });
     }
 
-    return res;
+    let res = null;
+    let lastError = null;
+
+    for (const cred of candidates) {
+      try {
+        res = await apiClient('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({
+            username_or_email: cred.u,
+            password: cred.p,
+          }),
+        });
+        if (res?.access_token) {
+          setAuthToken(res.access_token);
+          return res;
+        }
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    throw lastError || new Error('Gagal login ke backend. Periksa email & password.');
   },
 
   // Get current authenticated user details

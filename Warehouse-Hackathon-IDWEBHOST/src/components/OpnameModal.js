@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cardBg,
     fontSize: fonts.sizes.sm,
     color: colors.textPrimary,
-    outline: 'none',
+    outlineStyle: 'none',
     fontFamily: fonts.family,
   },
   auditGrid: {

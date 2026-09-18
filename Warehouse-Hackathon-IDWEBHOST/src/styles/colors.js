@@ -157,4 +157,33 @@ export const layout = {
   topBarHeight: 64,
   mobileTopBarHeight: 56,
   bottomNavHeight: 64,
+  staffTopBarHeight: 56,
+  staffBottomNavHeight: 64,
 };
+
+export const staffColors = {
+  // Tasks by Status
+  taskPending: '#F59E0B',
+  taskPendingBg: '#FEF3C7',
+  taskInProgress: '#3B82F6',
+  taskInProgressBg: '#DBEAFE',
+  taskDone: '#10B981',
+  taskDoneBg: '#D1FAE5',
+
+  // Tasks by Category
+  taskTransfer: '#4F46E5',
+  taskTransferBg: '#EEF2FF',
+  taskOpname: '#D97706',
+  taskOpnameBg: '#FEF3C7',
+  taskReceiving: '#0284C7',
+  taskReceivingBg: '#E0F2FE',
+  taskCounting: '#7C3AED',
+  taskCountingBg: '#EDE9FE',
+
+  // Shifts
+  shiftActive: '#10B981',
+  shiftActiveBg: '#DCFCE7',
+  shiftEnded: '#6B7280',
+  shiftEndedBg: '#F3F4F6',
+};
+
