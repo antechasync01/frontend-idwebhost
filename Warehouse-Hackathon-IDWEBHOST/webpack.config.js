@@ -44,7 +44,7 @@ module.exports = {
     static: {
       directory: path.join(__dirname, 'public'),
     },
-    port: process.env.PORT || 3002,
+    port: 3010,
     hot: true,
     historyApiFallback: true,
     host: '0.0.0.0',
